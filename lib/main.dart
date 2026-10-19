@@ -15,6 +15,7 @@ class FabApp extends StatelessWidget {
       title: 'Fabrication',
       theme: AppTheme.light(),
       home: const HomeScreen(),
+
     );
   }
 }
