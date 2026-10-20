@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../utils/formatters.dart';
 
 class PendingPaymentsCard extends StatelessWidget {
   const PendingPaymentsCard({

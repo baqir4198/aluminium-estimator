@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/job.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../utils/formatters.dart';
 
 class JobTile extends StatelessWidget {
   const JobTile({required this.job, required this.onTap});
