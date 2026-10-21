@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:aluminium_estimator/models/opening.dart';
-import 'package:aluminium_estimator/theme/app_colors.dart';
-import 'package:aluminium_estimator/theme/app_text.dart';
-import 'package:aluminium_estimator/utils/formatters.dart';
+import '../models/opening.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+import '../utils/formatters.dart';
 
 class OpeningTile extends StatelessWidget {
   const OpeningTile({super.key, required this.opening, required this.onTap});
@@ -52,7 +52,7 @@ class OpeningTile extends StatelessWidget {
                       style: bodyStyle(16, weight: FontWeight.w600),
                     ),
                     Text(
-                      '${opening.sizeLabel} · Qty ${opening.quantity} · ${opening.color}',
+                      '${opening.sizesSummary} · ${opening.color}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: bodyStyle(14, color: AppColors.muted),

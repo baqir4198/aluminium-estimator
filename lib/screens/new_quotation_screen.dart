@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:aluminium_estimator/models/opening.dart';
-import 'package:aluminium_estimator/theme/app_colors.dart';
-import 'package:aluminium_estimator/theme/app_text.dart';
-import 'package:aluminium_estimator/widgets/add_opening_button.dart';
-import 'package:aluminium_estimator/widgets/customer_card.dart';
-import 'package:aluminium_estimator/widgets/opening_tile.dart';
-import 'package:aluminium_estimator/widgets/quotation_bottom_bar.dart';
-import 'package:aluminium_estimator/widgets/square_icon_button.dart';
+import '../models/opening.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+import '../widgets/add_opening_button.dart';
+import '../widgets/customer_card.dart';
+import '../widgets/opening_tile.dart';
+import '../widgets/quotation_bottom_bar.dart';
+import '../widgets/square_icon_button.dart';
+import 'opening_builder_screen.dart';
 
 class NewQuotationScreen extends StatefulWidget {
   const NewQuotationScreen({super.key});
@@ -18,37 +19,10 @@ class NewQuotationScreen extends StatefulWidget {
 class _NewQuotationScreenState extends State<NewQuotationScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-
-  // Sample data. Start with an empty list once the opening builder exists.
-  final List<Opening> _openings = [
-    const Opening(
-      type: OpeningType.slidingWindow,
-      widthFt: 4,
-      heightFt: 4,
-      quantity: 2,
-      color: 'Silver',
-      price: 32000,
-    ),
-    const Opening(
-      type: OpeningType.fixedGlass,
-      widthFt: 3,
-      heightFt: 5,
-      quantity: 1,
-      color: 'Bronze',
-      price: 9500,
-    ),
-    const Opening(
-      type: OpeningType.door,
-      widthFt: 3,
-      heightFt: 7,
-      quantity: 1,
-      color: 'Black',
-      price: 24500,
-    ),
-  ];
+  final List<Opening> _openings = [];
 
   int get _total => _openings.fold(0, (sum, o) => sum + o.price);
-  int get _pieces => _openings.fold(0, (sum, o) => sum + o.quantity);
+  int get _pieces => _openings.fold(0, (sum, o) => sum + o.pieces);
 
   static const _months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -67,12 +41,24 @@ class _NewQuotationScreenState extends State<NewQuotationScreen> {
     super.dispose();
   }
 
-  void _addOpening() {
-    // TODO: push the Opening Builder screen and add the returned Opening.
+  Future<void> _addOpening() async {
+    final result = await Navigator.of(context).push<Opening>(
+      MaterialPageRoute(builder: (_) => const OpeningBuilderScreen()),
+    );
+    if (result != null && mounted) {
+      setState(() => _openings.add(result));
+    }
   }
 
-  void _editOpening(int index) {
-    // TODO: open the Opening Builder with this opening.
+  Future<void> _editOpening(int index) async {
+    final result = await Navigator.of(context).push<Opening>(
+      MaterialPageRoute(
+        builder: (_) => OpeningBuilderScreen(initial: _openings[index]),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() => _openings[index] = result);
+    }
   }
 
   @override
@@ -111,6 +97,15 @@ class _NewQuotationScreenState extends State<NewQuotationScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
+                    if (_openings.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'No openings yet. Add your first window or door.',
+                          textAlign: TextAlign.center,
+                          style: bodyStyle(14, color: AppColors.muted),
+                        ),
+                      ),
                     for (var i = 0; i < _openings.length; i++) ...[
                       OpeningTile(
                         opening: _openings[i],
@@ -128,8 +123,11 @@ class _NewQuotationScreenState extends State<NewQuotationScreen> {
       ),
       bottomNavigationBar: QuotationBottomBar(
         total: _total,
-        pieces: _pieces,
-        onPreview: () {},
+        caption:
+        'Total · $_pieces ${_pieces == 1 ? 'piece' : 'pieces'}',
+        actionLabel: 'Preview PDF',
+        enabled: _pieces > 0,
+        onAction: () {},
       ),
     );
   }

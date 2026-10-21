@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:aluminium_estimator/theme/app_colors.dart';
-import 'package:aluminium_estimator/theme/app_text.dart';
-import 'package:aluminium_estimator/utils/formatters.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text.dart';
+import '../utils/formatters.dart';
 
+/// Sticky bottom bar: caption + amount on the left, one action on the right.
 class QuotationBottomBar extends StatelessWidget {
   const QuotationBottomBar({
     super.key,
     required this.total,
-    required this.pieces,
-    required this.onPreview,
+    required this.caption,
+    required this.actionLabel,
+    required this.onAction,
+    this.enabled = true,
   });
 
   final int total;
-  final int pieces;
-  final VoidCallback onPreview;
+  final String caption;
+  final String actionLabel;
+  final VoidCallback onAction;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +39,9 @@ class QuotationBottomBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Total · $pieces ${pieces == 1 ? 'piece' : 'pieces'}',
+                      caption,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: bodyStyle(13, color: AppColors.muted),
                     ),
                     Text(formatRs(total), style: displayStyle(30)),
@@ -43,7 +50,7 @@ class QuotationBottomBar extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               FilledButton(
-                onPressed: pieces == 0 ? null : onPreview,
+                onPressed: enabled ? onAction : null,
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   foregroundColor: Colors.white,
@@ -54,7 +61,7 @@ class QuotationBottomBar extends StatelessWidget {
                   ),
                   textStyle: bodyStyle(16, weight: FontWeight.w600),
                 ),
-                child: const Text('Preview PDF'),
+                child: Text(actionLabel),
               ),
             ],
           ),

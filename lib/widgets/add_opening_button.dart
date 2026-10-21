@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:aluminium_estimator/theme/app_text.dart';
+import '../theme/app_text.dart';
 
+/// Dashed "add" button. Used for "Add opening" and "Add size".
 class AddOpeningButton extends StatelessWidget {
-  const AddOpeningButton({super.key, required this.onPressed});
+  const AddOpeningButton({
+    super.key,
+    required this.onPressed,
+    this.label = 'Add opening',
+    this.height = 52,
+  });
 
   final VoidCallback onPressed;
+  final String label;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: height,
       width: double.infinity,
       child: CustomPaint(
         painter: _DashedBorderPainter(
@@ -27,7 +35,7 @@ class AddOpeningButton extends StatelessWidget {
                 children: [
                   const Icon(Icons.add_rounded, size: 22),
                   const SizedBox(width: 8),
-                  Text('Add opening', style: bodyStyle(16, weight: FontWeight.w600)),
+                  Text(label, style: bodyStyle(16, weight: FontWeight.w600)),
                 ],
               ),
             ),
