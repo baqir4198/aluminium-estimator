@@ -69,7 +69,6 @@ class _DashedBorderPainter extends CustomPainter {
       }
     }
   }
-
   @override
   bool shouldRepaint(covariant _DashedBorderPainter old) =>
       old.color != color || old.radius != radius;
