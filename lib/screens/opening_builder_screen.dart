@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/frame_color.dart';
 import '../models/opening.dart';
+import '../models/price_breakdown.dart';
+import '../models/rates.dart';
 import '../models/size_line.dart';
+import '../services/price_calculator.dart';
+import '../services/rates_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/add_opening_button.dart';
 import '../widgets/color_selector.dart';
+import '../widgets/discount_row.dart';
 import '../widgets/opening_preview.dart';
 import '../widgets/opening_type_selector.dart';
-import '../widgets/option_row.dart';
+import '../widgets/price_breakdown_cards.dart';
 import '../widgets/quotation_bottom_bar.dart';
-import '../widgets/square_icon_button.dart';
 import '../widgets/size_row_tile.dart';
+import '../widgets/square_icon_button.dart';
 
 /// Returns an [Opening] through Navigator.pop when the user taps Save.
 class OpeningBuilderScreen extends StatefulWidget {
@@ -51,20 +56,13 @@ class _RowData {
 }
 
 class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
-  // TODO: load these from the Rates screen / database later.
-  static const _defaultRate = 1000;
-  static const _glassOptions = [
-    '5 mm clear',
-    '5 mm tinted',
-    '6 mm clear',
-    '6 mm tinted',
-    'Frosted',
-  ];
-
   late OpeningType _type;
   late String _color;
-  late String _glass;
-  late int _rate;
+  GroupRates? _rates;
+
+  final _discountController = TextEditingController();
+  bool _discountTouched = false;
+
   final List<_RowData> _rows = [];
   int _selected = 0;
 
@@ -75,14 +73,12 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
     if (o == null) {
       _type = OpeningType.cSectionWindow;
       _color = FrameColor.options.first.name;
-      _glass = _glassOptions.first;
-      _rate = _defaultRate;
       _rows.add(_RowData());
     } else {
       _type = o.type;
       _color = o.color;
-      _glass = o.glass;
-      _rate = o.ratePerSqFt;
+      _discountController.text = SizeLine.formatFt(o.discountPercent);
+      _discountTouched = true;
       for (final s in o.sizes) {
         _rows.add(_RowData(
           width: s.widthFt,
@@ -91,6 +87,7 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
         ));
       }
     }
+    _loadRates();
   }
 
   @override
@@ -98,22 +95,50 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
     for (final r in _rows) {
       r.dispose();
     }
+    _discountController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadRates() async {
+    final group = _type.rateGroup;
+    final rates = await RatesService.instance.load(group);
+    if (!mounted || group != _type.rateGroup) return;
+    setState(() {
+      _rates = rates;
+      if (!_discountTouched) {
+        _discountController.text =
+            SizeLine.formatFt(rates.defaultDiscountPercent);
+      }
+    });
+  }
+
+  // ---- values worked out from the fields ----
+
   List<SizeLine> get _sizes => _rows.map((r) => r.toSizeLine()).toList();
 
-  Opening get _draft => Opening(
-    type: _type,
-    color: _color,
-    glass: _glass,
-    sizes: _sizes,
-    ratePerSqFt: _rate,
-  );
+  int get _pieces => _sizes.fold(0, (sum, s) => sum + s.quantity);
 
-  bool get _valid => _sizes.every(
+  double get _area => _sizes.fold(0.0, (sum, s) => sum + s.totalAreaSqFt);
+
+  double get _discount =>
+      (double.tryParse(_discountController.text) ?? 0).clamp(0, 100).toDouble();
+
+  PriceBreakdown? get _breakdown {
+    final rates = _rates;
+    if (rates == null) return null;
+    return PriceCalculator.calculate(
+      type: _type,
+      sizes: _sizes,
+      rates: rates,
+      discountPercent: _discount,
+    );
+  }
+
+  bool get _sizesValid => _sizes.every(
         (s) => s.widthFt > 0 && s.heightFt > 0 && s.quantity > 0,
   );
+
+  // ---- actions ----
 
   void _addRow() {
     final last = _rows.last.toSizeLine();
@@ -131,40 +156,29 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
     });
   }
 
-  Future<void> _pickGlass() async {
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: AppColors.surface,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final g in _glassOptions)
-              ListTile(
-                title: Text(g, style: bodyStyle(16)),
-                trailing: g == _glass
-                    ? const Icon(Icons.check_rounded, color: AppColors.accent)
-                    : null,
-                onTap: () => Navigator.of(context).pop(g),
-              ),
-          ],
-        ),
+  void _save() {
+    final breakdown = _breakdown;
+    if (breakdown == null) return;
+    FocusScope.of(context).unfocus();
+    Navigator.of(context).pop(
+      Opening(
+        type: _type,
+        color: _color,
+        glass: _rates?.glass.code ?? 'Glass 5 mm',
+        sizes: _sizes,
+        discountPercent: _discount,
+        price: breakdown.total.round(),
       ),
     );
-    if (picked != null) setState(() => _glass = picked);
-  }
-
-  void _save() {
-    FocusScope.of(context).unfocus();
-    Navigator.of(context).pop(_draft);
   }
 
   @override
   Widget build(BuildContext context) {
-    final draft = _draft;
+    final breakdown = _breakdown;
     final selectedSize = _rows[_selected].toSizeLine();
-    final area = SizeLine.formatFt(draft.totalAreaSqFt);
+    final pieces = _pieces;
+    final missingRates =
+        breakdown != null && breakdown.profiles.any((p) => p.ratePerFt == 0);
 
     return Scaffold(
       body: SafeArea(
@@ -207,7 +221,10 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
                   children: [
                     OpeningTypeSelector(
                       selected: _type,
-                      onChanged: (t) => setState(() => _type = t),
+                      onChanged: (t) {
+                        setState(() => _type = t);
+                        _loadRates();
+                      },
                     ),
                     const SizedBox(height: 14),
                     OpeningPreview(
@@ -225,7 +242,7 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
                       children: [
                         Text('Sizes', style: displayStyle(22)),
                         Text(
-                          '${_rows.length} ${_rows.length == 1 ? 'size' : 'sizes'} · ${draft.pieces} ${draft.pieces == 1 ? 'piece' : 'pieces'}',
+                          '${_rows.length} ${_rows.length == 1 ? 'size' : 'sizes'} · $pieces ${pieces == 1 ? 'piece' : 'pieces'}',
                           style: bodyStyle(14, color: AppColors.muted),
                         ),
                       ],
@@ -256,7 +273,20 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
                       onChanged: (c) => setState(() => _color = c),
                     ),
                     const SizedBox(height: 10),
-                    OptionRow(label: 'Glass', value: _glass, onTap: _pickGlass),
+                    DiscountRow(
+                      controller: _discountController,
+                      onChanged: () => setState(() => _discountTouched = true),
+                    ),
+                    const SizedBox(height: 14),
+                    if (missingRates) ...[
+                      const _Notice(
+                        'Some profile prices are 0. Enter your prices '
+                            'in the Rates tab.',
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (breakdown != null)
+                      PriceBreakdownCard(breakdown: breakdown),
                   ],
                 ),
               ),
@@ -265,11 +295,43 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
         ),
       ),
       bottomNavigationBar: QuotationBottomBar(
-        total: draft.price,
-        caption: '$area sq ft · ${draft.pieces} ${draft.pieces == 1 ? 'pc' : 'pcs'}',
+        total: breakdown?.total.round() ?? 0,
+        caption:
+        '${SizeLine.formatFt(_area)} sq ft · $pieces ${pieces == 1 ? 'pc' : 'pcs'}',
         actionLabel: 'Save opening',
-        enabled: _valid,
+        enabled: breakdown != null && _sizesValid,
         onAction: _save,
+      ),
+    );
+  }
+}
+
+class _Notice extends StatelessWidget {
+  const _Notice(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDE7D6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 20, color: AppColors.accentDark),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: bodyStyle(14, color: AppColors.accentDark),
+            ),
+          ),
+        ],
       ),
     );
   }

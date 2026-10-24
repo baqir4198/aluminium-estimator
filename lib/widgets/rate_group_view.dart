@@ -5,7 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'rate_field_row.dart';
 
-/// The list of profile prices + glass price for one group.
+/// Profile prices, glass price and other charges for one group.
 /// Every change is saved straight away through [RatesService].
 class RateGroupView extends StatefulWidget {
   const RateGroupView({super.key, required this.group});
@@ -16,9 +16,14 @@ class RateGroupView extends StatefulWidget {
   State<RateGroupView> createState() => _RateGroupViewState();
 }
 
+String _formatNumber(double v) {
+  if (v == 0) return '';
+  return v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+}
+
 class _RateRow {
   _RateRow(this.code, double price, {this.isCustom = false})
-      : controller = TextEditingController(text: _format(price));
+      : controller = TextEditingController(text: _formatNumber(price));
 
   final String code;
   final bool isCustom;
@@ -27,17 +32,18 @@ class _RateRow {
   double get price => double.tryParse(controller.text) ?? 0;
 
   void dispose() => controller.dispose();
-
-  static String _format(double v) {
-    if (v == 0) return '';
-    return v == v.roundToDouble() ? v.toInt().toString() : v.toString();
-  }
 }
 
 class _RateGroupViewState extends State<RateGroupView> {
   final _service = RatesService.instance;
   final List<_RateRow> _profiles = [];
   _RateRow? _glass;
+
+  final _hardware = TextEditingController();
+  final _labour = TextEditingController();
+  final _rent = TextEditingController();
+  final _discount = TextEditingController();
+
   bool _loading = true;
 
   @override
@@ -52,8 +58,14 @@ class _RateGroupViewState extends State<RateGroupView> {
       p.dispose();
     }
     _glass?.dispose();
+    _hardware.dispose();
+    _labour.dispose();
+    _rent.dispose();
+    _discount.dispose();
     super.dispose();
   }
+
+  double _read(TextEditingController c) => double.tryParse(c.text) ?? 0;
 
   Future<void> _load() async {
     final data = await _service.load(widget.group);
@@ -63,6 +75,10 @@ class _RateGroupViewState extends State<RateGroupView> {
         _profiles.add(_RateRow(p.code, p.price, isCustom: p.isCustom));
       }
       _glass = _RateRow(data.glass.code, data.glass.price);
+      _hardware.text = _formatNumber(data.hardwarePerWindow);
+      _labour.text = _formatNumber(data.labourPerSqFt);
+      _rent.text = _formatNumber(data.rentPerWindow);
+      _discount.text = _formatNumber(data.defaultDiscountPercent);
       _loading = false;
     });
   }
@@ -78,6 +94,10 @@ class _RateGroupViewState extends State<RateGroupView> {
             RateItem(code: p.code, price: p.price, isCustom: p.isCustom),
         ],
         glass: RateItem(code: glass.code, price: glass.price),
+        hardwarePerWindow: _read(_hardware),
+        labourPerSqFt: _read(_labour),
+        rentPerWindow: _read(_rent),
+        defaultDiscountPercent: _read(_discount),
       ),
     );
   }
@@ -89,7 +109,8 @@ class _RateGroupViewState extends State<RateGroupView> {
     );
     if (code == null || !mounted) return;
 
-    final exists = _profiles.any((p) => p.code.toLowerCase() == code.toLowerCase());
+    final exists =
+    _profiles.any((p) => p.code.toLowerCase() == code.toLowerCase());
     if (exists) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('$code is already in the list')),
@@ -111,7 +132,6 @@ class _RateGroupViewState extends State<RateGroupView> {
     messenger
         .showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 3),
         content: Text('${removed.code} deleted'),
         action: SnackBarAction(
           label: 'Undo',
@@ -150,7 +170,7 @@ class _RateGroupViewState extends State<RateGroupView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Profiles', style: displayStyle(20)),
+              Text('Profiles (1.2 mm)', style: displayStyle(20)),
               TextButton(
                 onPressed: _addProfile,
                 style: TextButton.styleFrom(
@@ -197,6 +217,49 @@ class _RateGroupViewState extends State<RateGroupView> {
                 onChanged: _save,
               ),
             ],
+          ),
+          const SizedBox(height: 18),
+          Text('Other charges', style: displayStyle(20)),
+          const SizedBox(height: 8),
+          _Card(
+            children: [
+              RateFieldRow(
+                label: 'Hardware',
+                controller: _hardware,
+                suffix: '/ window',
+                onChanged: _save,
+              ),
+              const _Divider(),
+              RateFieldRow(
+                label: 'Labour',
+                controller: _labour,
+                suffix: '/ sq ft',
+                onChanged: _save,
+              ),
+              const _Divider(),
+              RateFieldRow(
+                label: 'Rent',
+                controller: _rent,
+                suffix: '/ window',
+                onChanged: _save,
+              ),
+              const _Divider(),
+              RateFieldRow(
+                label: 'Default discount',
+                controller: _discount,
+                prefix: '',
+                suffix: '%',
+                onChanged: _save,
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+            child: Text(
+              'The discount applies to the aluminium only. '
+                  'You can change it for each opening.',
+              style: bodyStyle(13, color: AppColors.muted),
+            ),
           ),
         ],
       ),
@@ -270,6 +333,7 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
         onSubmitted: (_) => _submit(),
         decoration: const InputDecoration(
           labelText: 'Profile name',
+          hintText: 'For example M30',
         ),
       ),
       actions: [

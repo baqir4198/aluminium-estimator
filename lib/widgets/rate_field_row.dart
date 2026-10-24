@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 
-/// Profile/glass name on the left, editable price box on the right.
+/// Name on the left, editable number box on the right.
 class RateFieldRow extends StatelessWidget {
   const RateFieldRow({
     super.key,
@@ -11,6 +11,7 @@ class RateFieldRow extends StatelessWidget {
     required this.controller,
     required this.suffix,
     required this.onChanged,
+    this.prefix = 'Rs',
     this.onDelete,
   });
 
@@ -18,6 +19,9 @@ class RateFieldRow extends StatelessWidget {
   final TextEditingController controller;
   final String suffix;
   final VoidCallback onChanged;
+
+  /// Text before the number. Use '' for a percentage.
+  final String prefix;
 
   /// When not null, a delete button is shown (used for custom profiles).
   final VoidCallback? onDelete;
@@ -45,9 +49,10 @@ class RateFieldRow extends StatelessWidget {
             ),
           const SizedBox(width: 12),
           Semantics(
-            label: '$label price',
-            child: _PriceBox(
+            label: '$label value',
+            child: PriceBox(
               controller: controller,
+              prefix: prefix,
               suffix: suffix,
               onChanged: onChanged,
             ),
@@ -58,22 +63,28 @@ class RateFieldRow extends StatelessWidget {
   }
 }
 
-class _PriceBox extends StatefulWidget {
-  const _PriceBox({
+/// Number box with a prefix (Rs) and a suffix (/ ft, %, ...).
+class PriceBox extends StatefulWidget {
+  const PriceBox({
+    super.key,
     required this.controller,
     required this.suffix,
     required this.onChanged,
+    this.prefix = 'Rs',
+    this.width = 150,
   });
 
   final TextEditingController controller;
+  final String prefix;
   final String suffix;
   final VoidCallback onChanged;
+  final double width;
 
   @override
-  State<_PriceBox> createState() => _PriceBoxState();
+  State<PriceBox> createState() => _PriceBoxState();
 }
 
-class _PriceBoxState extends State<_PriceBox> {
+class _PriceBoxState extends State<PriceBox> {
   final _focus = FocusNode();
 
   @override
@@ -94,7 +105,7 @@ class _PriceBoxState extends State<_PriceBox> {
     return GestureDetector(
       onTap: _focus.requestFocus,
       child: Container(
-        width: 150,
+        width: widget.width,
         height: 44,
         padding: EdgeInsets.symmetric(horizontal: focused ? 9 : 10),
         decoration: BoxDecoration(
@@ -107,7 +118,8 @@ class _PriceBoxState extends State<_PriceBox> {
         ),
         child: Row(
           children: [
-            Text('Rs', style: bodyStyle(14, color: AppColors.muted)),
+            if (widget.prefix.isNotEmpty)
+              Text(widget.prefix, style: bodyStyle(14, color: AppColors.muted)),
             Expanded(
               child: TextField(
                 controller: widget.controller,
@@ -128,10 +140,7 @@ class _PriceBoxState extends State<_PriceBox> {
                 ),
               ),
             ),
-            Text(
-              widget.suffix,
-              style: bodyStyle(13, color: AppColors.muted),
-            ),
+            Text(widget.suffix, style: bodyStyle(13, color: AppColors.muted)),
           ],
         ),
       ),

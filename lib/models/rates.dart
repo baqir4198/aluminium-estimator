@@ -29,9 +29,30 @@ class RateItem {
 }
 
 /// All prices of one group (Windows or F-Section).
+/// Profile prices are the 1.2 mm rates (per foot).
 class GroupRates {
-  const GroupRates({required this.profiles, required this.glass});
+  const GroupRates({
+    required this.profiles,
+    required this.glass,
+    this.hardwarePerWindow = 0,
+    this.labourPerSqFt = 0,
+    this.rentPerWindow = 0,
+    this.defaultDiscountPercent = 10,
+  });
 
   final List<RateItem> profiles;
   final RateItem glass;
+
+  /// Fixed amount for every window.
+  final double hardwarePerWindow;
+
+  /// Amount per sq ft of window area.
+  final double labourPerSqFt;
+
+  /// Fixed amount for every window.
+  final double rentPerWindow;
+
+  /// Starting value of the discount field on the Add opening screen.
+  /// The discount is applied to the aluminium (profiles) only.
+  final double defaultDiscountPercent;
 }
