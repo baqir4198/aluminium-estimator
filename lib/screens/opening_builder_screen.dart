@@ -73,7 +73,7 @@ class _OpeningBuilderScreenState extends State<OpeningBuilderScreen> {
     super.initState();
     final o = widget.initial;
     if (o == null) {
-      _type = OpeningType.slidingWindow;
+      _type = OpeningType.cSectionWindow;
       _color = FrameColor.options.first.name;
       _glass = _glassOptions.first;
       _rate = _defaultRate;

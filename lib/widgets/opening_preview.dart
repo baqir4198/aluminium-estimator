@@ -113,12 +113,10 @@ class _OpeningPainter extends CustomPainter {
     );
 
     switch (type) {
-      case OpeningType.slidingWindow:
+      case OpeningType.cSectionWindow:
         _sliding(canvas, inner);
-      case OpeningType.fixedGlass:
-        _pane(canvas, inner, const Color(0xFFCFE0E8));
-      case OpeningType.door:
-        _door(canvas, inner);
+      case OpeningType.fSectionWindow:
+        _bordered(canvas, inner);
     }
 
     _dimensions(canvas, frame, size);
@@ -157,23 +155,20 @@ class _OpeningPainter extends CustomPainter {
     }
   }
 
-  void _door(Canvas canvas, Rect inner) {
-    final glass = Rect.fromLTWH(inner.left, inner.top, inner.width, inner.height * 0.58);
-    final panel = Rect.fromLTRB(inner.left, glass.bottom + 2, inner.right, inner.bottom);
-    _pane(canvas, glass, const Color(0xFFCFE0E8));
-    canvas.drawRect(panel, Paint()..color = frameColor);
+  /// F-Section window: same sliding shutters as the C-Section window, but
+  /// the outer frame has an extra border (about 1.3 inch in real life).
+  /// The border is drawn thicker than true scale so it stays visible.
+  void _bordered(Canvas canvas, Rect inner) {
+    final band = math.min(7.0, math.min(inner.width, inner.height) / 6);
+    canvas.drawRect(inner, Paint()..color = frameColor);
     canvas.drawRect(
-      panel,
+      inner,
       Paint()
-        ..color = _paneStroke
+        ..color = _line
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+        ..strokeWidth = 1,
     );
-    canvas.drawCircle(
-      Offset(inner.right - 10, inner.center.dy),
-      3,
-      Paint()..color = AppColors.ink,
-    );
+    _sliding(canvas, inner.deflate(band));
   }
 
   void _dimensions(Canvas canvas, Rect frame, Size size) {

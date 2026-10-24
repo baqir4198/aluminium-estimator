@@ -1,3 +1,4 @@
+import 'package:aluminium_estimator/screens/main_shell.dart';
 import 'package:aluminium_estimator/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,7 @@ class FabApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Fabrication',
       theme: AppTheme.light(),
-      home: const HomeScreen(),
+      home: const MainShell(),
 
     );
   }

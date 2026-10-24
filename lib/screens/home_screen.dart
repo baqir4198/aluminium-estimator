@@ -9,15 +9,9 @@ import '../widgets/section_header.dart';
 import '../widgets/stat_tile.dart';
 import 'new_quotation_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+/// Home tab. The bottom navigation now lives in MainShell.
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _tab = 0;
 
   static const _jobs = [
     Job(
@@ -40,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   ];
 
-  void _openNewQuotation() {
+  void _openNewQuotation(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const NewQuotationScreen()),
     );
@@ -79,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpace.lg),
-                  NewQuotationButton(onPressed: _openNewQuotation),
+                  NewQuotationButton(onPressed: () => _openNewQuotation(context)),
                   const SizedBox(height: AppSpace.xl),
                   SectionHeader(
                     title: 'Recent jobs',
@@ -105,32 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (i) => setState(() => _tab = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment_rounded),
-            label: 'Jobs',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.description_outlined),
-            selectedIcon: Icon(Icons.description_rounded),
-            label: 'Quotes',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.sell_outlined),
-            selectedIcon: Icon(Icons.sell_rounded),
-            label: 'Rates',
-          ),
-        ],
       ),
     );
   }

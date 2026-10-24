@@ -1,13 +1,16 @@
+import 'rates.dart';
 import 'size_line.dart';
 
 enum OpeningType {
-  slidingWindow('2-track sliding window', 'Sliding window'),
-  fixedGlass('Fixed glass', 'Fixed glass'),
-  door('Door', 'Door');
+  cSectionWindow('C-Section Window', 'C-Section Window', RateGroup.windows),
+  fSectionWindow('F-Section Window', 'F-Section Window', RateGroup.fSection);
 
-  const OpeningType(this.label, this.shortLabel);
+  const OpeningType(this.label, this.shortLabel, this.rateGroup);
   final String label;
   final String shortLabel;
+
+  /// Which Rates tab supplies the prices for this type.
+  final RateGroup rateGroup;
 }
 
 /// One kind of window/door (type, color, glass) in one or more sizes.
