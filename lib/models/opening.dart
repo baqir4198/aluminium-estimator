@@ -5,24 +5,53 @@ enum OpeningType {
   /// No outer border layer, so no extra length on the two profiles.
   cSectionWindow(
     'C-Section Window',
-    'C-Section Window',
+    'C-Section',
     RateGroup.windows,
     bottomProfile: 'DC26C',
     topProfile: 'DC30C',
     bottomExtraFt: 0,
     topExtraFt: 0,
+    hasMeshPanel: true,
   ),
 
   /// Outer border layer: half a foot extra on the bottom profile and
   /// one foot extra on the top profile, for every window of any size.
   fSectionWindow(
     'F-Section Window',
-    'F-Section Window',
+    'F-Section',
     RateGroup.fSection,
     bottomProfile: 'DC26F',
     topProfile: 'DC30F',
     bottomExtraFt: 0.5,
     topExtraFt: 1,
+    hasMeshPanel: true,
+  ),
+
+  /// Like the C-Section window, but with M26 and M30 instead of DC26C and
+  /// DC30C, and no mesh panel (so no D29).
+  mSectionWindow(
+    'M-Section Window',
+    'M-Section',
+    RateGroup.mSection,
+    bottomProfile: 'M26',
+    topProfile: 'M30',
+    bottomExtraFt: 0,
+    topExtraFt: 0,
+    hasMeshPanel: false,
+  ),
+
+  /// Like the M-Section window, plus the outer border layer. It uses M26F
+  /// and M30F, with half a foot extra on M26F and one foot extra on M30F,
+  /// for every window of any size.
+  mfSectionWindow(
+    'MF-Section Window',
+    'MF-Section',
+    RateGroup.mfSection,
+    bottomProfile: 'M26F',
+    topProfile: 'M30F',
+    bottomExtraFt: 0.5,
+    topExtraFt: 1,
+    hasMeshPanel: false,
   );
 
   const OpeningType(
@@ -33,6 +62,7 @@ enum OpeningType {
         required this.topProfile,
         required this.bottomExtraFt,
         required this.topExtraFt,
+        required this.hasMeshPanel,
       });
 
   final String label;
@@ -50,6 +80,9 @@ enum OpeningType {
 
   final double bottomExtraFt;
   final double topExtraFt;
+
+  /// The mesh panel uses D29 (width + 2 x height). Without it, no D29.
+  final bool hasMeshPanel;
 }
 
 /// One kind of window (type, color) in one or more sizes.

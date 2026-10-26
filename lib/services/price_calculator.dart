@@ -13,7 +13,7 @@ import '../models/size_line.dart';
 /// Lengths per window (W = width, H = height):
 ///   bottom profile (DC26C / DC26F) : W + bottomExtra      (0 or 0.5 ft)
 ///   top profile    (DC30C / DC30F) : W + 2H + topExtra     (0 or 1 ft)
-///   D29                            : W + 2H
+///   D29 (mesh panel only)          : W + 2H
 ///   M23 and M28                    : 2H each
 ///   M24                            : 2W
 class PriceCalculator {
@@ -62,7 +62,7 @@ class PriceCalculator {
         profile('M23', m23),
         profile('M28', m28),
         profile('M24', m24),
-        profile('D29', d29),
+        if (type.hasMeshPanel) profile('D29', d29),
       ],
       discountPercent: discountPercent.clamp(0, 100).toDouble(),
       hardware: rates.hardwarePerWindow * pieces,

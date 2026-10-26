@@ -1,6 +1,8 @@
 enum RateGroup {
   windows('Windows'),
-  fSection('F-Section');
+  fSection('F-Section'),
+  mSection('M-Section'),
+  mfSection('MF-Section');
 
   const RateGroup(this.label);
   final String label;

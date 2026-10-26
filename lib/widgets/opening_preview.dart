@@ -114,8 +114,10 @@ class _OpeningPainter extends CustomPainter {
 
     switch (type) {
       case OpeningType.cSectionWindow:
+      case OpeningType.mSectionWindow:
         _sliding(canvas, inner);
       case OpeningType.fSectionWindow:
+      case OpeningType.mfSectionWindow:
         _bordered(canvas, inner);
     }
 

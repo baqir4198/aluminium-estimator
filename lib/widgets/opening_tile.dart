@@ -11,8 +11,12 @@ class OpeningTile extends StatelessWidget {
   final VoidCallback onTap;
 
   IconData get _icon => switch (opening.type) {
-    OpeningType.cSectionWindow => Icons.window_outlined,
-    OpeningType.fSectionWindow => Icons.filter_frames_outlined,
+    OpeningType.cSectionWindow ||
+    OpeningType.mSectionWindow =>
+    Icons.window_outlined,
+    OpeningType.fSectionWindow ||
+    OpeningType.mfSectionWindow =>
+    Icons.filter_frames_outlined,
   };
 
   @override

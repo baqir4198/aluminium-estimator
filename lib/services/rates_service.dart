@@ -31,6 +31,26 @@ class RatesService {
       ],
       glass: RateItem(code: 'Glass 5 mm', price: 0),
     ),
+    RateGroup.mSection: const GroupRates(
+      profiles: [
+        RateItem(code: 'M26', price: 0),
+        RateItem(code: 'M30', price: 0),
+        RateItem(code: 'M23', price: 0),
+        RateItem(code: 'M28', price: 0),
+        RateItem(code: 'M24', price: 0),
+      ],
+      glass: RateItem(code: 'Glass 5 mm', price: 0),
+    ),
+    RateGroup.mfSection: const GroupRates(
+      profiles: [
+        RateItem(code: 'M26F', price: 0),
+        RateItem(code: 'M30F', price: 0),
+        RateItem(code: 'M23', price: 0),
+        RateItem(code: 'M28', price: 0),
+        RateItem(code: 'M24', price: 0),
+      ],
+      glass: RateItem(code: 'Glass 5 mm', price: 0),
+    ),
   };
 
   Future<GroupRates> load(RateGroup group) async => _data[group]!;
